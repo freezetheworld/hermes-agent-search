@@ -12,7 +12,8 @@ Extraction escalation
   1. AgentSearch `read_url` / `search_extract`
   2. Crawl4AI `/home/hermes/services/web-research/extract.py`
   3. Hermes interactive browser
-  4. CloakBrowser + WARP SOCKS 127.0.0.1:2080
+  4. agent-browser CLI with installed Chrome 151
+  5. CloakBrowser + WARP SOCKS 127.0.0.1:2080
 ```
 
 All HTTP and SOCKS listeners are bound to localhost. Nothing in this stack is publicly exposed.
@@ -24,6 +25,7 @@ All HTTP and SOCKS listeners are bound to localhost. Nothing in this stack is pu
 - Deterministic fallback CLI: `/home/hermes/services/agent-search/scripts/web_stack.py`
 - Crawl4AI extractor: `/home/hermes/services/web-research/extract.py`
 - Crawl4AI virtualenv: `/home/hermes/services/web-research/.venv-crawl4ai`
+- agent-browser Chrome: `/home/hermes/.agent-browser/browsers/chrome-151.0.7922.77`
 - Hermes MCP config: `/home/hermes/.hermes/config.yaml`
 
 ## Research order
