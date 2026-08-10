@@ -1003,7 +1003,8 @@ async def kill_chain(
 
     web_strategies.extend([
         ("wayback", lambda: strategy_wayback(client, url)),
-        ("google-cache", lambda: strategy_google_cache(client, url)),
+        # Google removed its public web cache. The old endpoint now returns
+        # unrelated consent/search pages that can be mistaken for source text.
         ("search-about", lambda: strategy_search_about(client, url, searxng_url)),
         ("adapter-403", lambda: strategy_adapter(url, "403_forbidden")),
         ("adapter-empty", lambda: strategy_adapter(url, "empty_content")),

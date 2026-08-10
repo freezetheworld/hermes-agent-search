@@ -20,7 +20,7 @@ fi
 
 echo "Clearing $LABEL cache via $CONTAINER..."
 
-docker exec "$CONTAINER" python3 - <<'PY'
+docker exec -i "$CONTAINER" python3 - <<'PY'
 import sqlite3, os, time
 data = "/app/data"
 for db, tables in [
@@ -54,10 +54,20 @@ PY
 echo "Restarting $CONTAINER to flush in-memory cache..."
 docker restart "$CONTAINER" >/dev/null
 
-# Health probe
-sleep 2
+# Health probe: wait for the recreated API process instead of assuming a fixed sleep is enough.
 PORT=$(docker port "$CONTAINER" 3939/tcp 2>/dev/null | head -1 | cut -d: -f2)
 if [ -n "$PORT" ]; then
-  curl -s "http://localhost:${PORT}/health" && echo
+  for attempt in {1..30}; do
+    if curl -fsS "http://localhost:${PORT}/health"; then
+      echo
+      echo "Done."
+      exit 0
+    fi
+    sleep 1
+  done
+  echo "API did not become healthy within 30 seconds" >&2
+  exit 1
 fi
-echo "Done."
+
+echo "API port mapping not found after restart" >&2
+exit 1
