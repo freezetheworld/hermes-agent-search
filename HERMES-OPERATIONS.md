@@ -34,9 +34,10 @@ All HTTP and SOCKS listeners are bound to localhost. Nothing in this stack is pu
 2. Open primary sources, not only snippets. Use `read_url`, `search_extract`, or `read_batch`.
 3. Use Crawl4AI when clean Markdown or deterministic JavaScript rendering is needed.
 4. Use the built-in Hermes browser for interaction, forms, and visual state.
-5. Use CloakBrowser + WARP only for bot-sensitive pages.
-6. Cross-check consequential claims across independent sources and label uncertainty.
-7. Do not equate “page returned” with “requested source returned”; check URL, title, provenance, and challenge/consent text.
+5. Use agent-browser for fast terminal-driven sessions when a persistent CLI browser is useful.
+6. Use CloakBrowser + WARP only for bot-sensitive pages.
+7. Cross-check consequential claims across independent sources and label uncertainty.
+8. Do not equate “page returned” with “requested source returned”; check URL, title, provenance, and challenge/consent text.
 
 `deep_search` generates query variants and can drift. Use it for broad discovery, then validate results against the original question.
 
