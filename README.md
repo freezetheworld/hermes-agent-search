@@ -1,12 +1,14 @@
-# AgentSearch
+# Hermes AgentSearch
 
-Self-hosted search API for AI agents. 17 endpoints. Layered content extraction with optional browser rendering. Optional Tor-anonymized stack. No third-party search API keys, no per-query fees, no vendor lock-in. Optional local bearer auth is supported.
+Self-hosted web research for Hermes and other MCP-compatible AI agents. It combines a private SearXNG instance, a 17-endpoint search/extraction API, an MCP server, layered content extraction, optional browser rendering, and an optional Tor-anonymized stack. No third-party search API keys, per-query fees, or vendor lock-in are required.
+
+This distribution adds a deterministic research CLI, Hermes-specific installation and operating guidance, safer public-URL validation, localhost-only defaults, and regression fixes on top of [AgentSearch](https://github.com/brcrusoe72/agent-search). See [UPSTREAM.md](UPSTREAM.md) for attribution and the relationship to the upstream project.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/agentsearch-client)](https://pypi.org/project/agentsearch-client/)
 
 ```bash
-git clone https://github.com/brcrusoe72/agent-search.git
-cd agent-search
+git clone https://github.com/freezetheworld/hermes-agent-search.git
+cd hermes-agent-search
 ./scripts/prepare-searxng.sh
 docker compose up -d
 curl "http://localhost:3939/search?q=distributed+consensus+algorithms"
@@ -22,11 +24,20 @@ curl -H "Authorization: Bearer $AGENT_SEARCH_TOKEN" \
   "http://localhost:3939/search?q=distributed+consensus+algorithms"
 ```
 
+To connect the stack to Hermes after Docker is available:
+
+```bash
+./scripts/install-hermes.sh
+hermes mcp test agent-search
+```
+
+The installer creates an isolated MCP virtual environment and registers the local stdio server with Hermes. It never stores tokens in Git. See [Hermes operations](HERMES-OPERATIONS.md).
+
 Prefer not to use Docker for the API server?
 
 ```bash
-git clone https://github.com/brcrusoe72/agent-search.git
-cd agent-search
+git clone https://github.com/freezetheworld/hermes-agent-search.git
+cd hermes-agent-search
 ./scripts/install-native.sh
 ./scripts/run-native.sh
 ```

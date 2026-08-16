@@ -1,157 +1,129 @@
-# Hermes Web Research Stack — Operations
+# Hermes AgentSearch — operations
 
-## Live architecture
+## Architecture
 
 ```text
 Hermes
-  └─ MCP agent-search (16 tools)
+  └─ MCP agent-search (stdio)
        └─ AgentSearch API 127.0.0.1:3939
-            └─ private SearXNG 127.0.0.1:8888 / Docker network
+            └─ SearXNG 127.0.0.1:8888 / private Docker network
 
 Extraction escalation
-  1. AgentSearch `read_url` / `search_extract`
-  2. Crawl4AI `/home/hermes/services/web-research/extract.py`
-  3. Hermes interactive browser
-  4. agent-browser CLI with installed Chrome 151
-  5. CloakBrowser + WARP SOCKS 127.0.0.1:2080
+  1. Direct fetch and readability extraction
+  2. User-agent rotation
+  3. Ephemeral browser rendering
+  4. Wayback/search-about fallbacks
+  5. Site adapters, PDF extraction, and YouTube transcripts
 ```
 
-All HTTP and SOCKS listeners are bound to localhost. Nothing in this stack is publicly exposed.
+All bundled listeners bind to loopback by default. The API is not publicly
+exposed unless an operator deliberately changes the Compose port mappings.
 
-## Installed locations
+## Install
 
-- AgentSearch checkout and Compose stack: `/home/hermes/services/agent-search`
-- AgentSearch MCP virtualenv: `/home/hermes/services/agent-search/mcp-server/.venv`
-- Deterministic fallback CLI: `/home/hermes/services/agent-search/scripts/web_stack.py`
-- Crawl4AI extractor: `/home/hermes/services/web-research/extract.py`
-- Crawl4AI virtualenv: `/home/hermes/services/web-research/.venv-crawl4ai`
-- agent-browser Chrome: `/home/hermes/.agent-browser/browsers/chrome-151.0.7922.77`
-- Hermes MCP config: `/home/hermes/.hermes/config.yaml`
+Requirements:
 
-## Research order
-
-1. Search with `mcp__agent_search__search`, `search_strategy`, `source_search`, or `news`.
-2. Open primary sources, not only snippets. Use `read_url`, `search_extract`, or `read_batch`.
-3. Use Crawl4AI when clean Markdown or deterministic JavaScript rendering is needed.
-4. Use the built-in Hermes browser for interaction, forms, and visual state.
-5. Use agent-browser for fast terminal-driven sessions when a persistent CLI browser is useful.
-6. Use CloakBrowser + WARP only for bot-sensitive pages.
-7. Cross-check consequential claims across independent sources and label uncertainty.
-8. Do not equate “page returned” with “requested source returned”; check URL, title, provenance, and challenge/consent text.
-
-`deep_search` generates query variants and can drift. Use it for broad discovery, then validate results against the original question.
-
-## Health
+- Linux or macOS with Python 3.11+
+- Docker with Compose v2
+- [Hermes Agent](https://hermes-agent.nousresearch.com/docs)
 
 ```bash
-cd /home/hermes/services/agent-search
+git clone https://github.com/freezetheworld/hermes-agent-search.git
+cd hermes-agent-search
+./scripts/prepare-searxng.sh
+docker compose up -d --build
+./scripts/install-hermes.sh
+hermes mcp test agent-search
+```
 
+The installer creates `mcp-server/.venv`, installs the packaged MCP server, and
+registers its absolute executable path with Hermes. Use `/reload-mcp` or start a
+new Hermes session after changing MCP configuration.
+
+## Health and functional checks
+
+Run these from the repository root:
+
+```bash
 docker compose ps
 curl -fsS http://127.0.0.1:3939/health | python3 -m json.tool
 curl -fsS 'http://127.0.0.1:8888/search?q=healthcheck&format=json' >/dev/null
 hermes mcp test agent-search
-warp-cli --accept-tos status
-ss -ltnp | grep -E ':(3939|8888|2080)\b'
-```
 
-Expected live state:
-
-- `agent-search-api`: healthy/reachable on `127.0.0.1:3939`
-- `agent-search-searxng`: running on `127.0.0.1:8888`
-- MCP `agent-search`: connected with 16 tools
-- `warp-svc`: enabled, active, proxy mode on `127.0.0.1:2080`
-
-## Functional checks
-
-Search:
-
-```bash
-cd /home/hermes/services/agent-search
 python3 scripts/web_stack.py search 'Hermes Agent Nous Research GitHub' --count 3
-```
-
-Normal extraction:
-
-```bash
-python3 scripts/web_stack.py read \
-  'https://hermes-agent.nousresearch.com/docs/reference/tools-reference' \
-  --max-chars 2000
-```
-
-Clean Markdown extraction:
-
-```bash
-/home/hermes/services/web-research/extract.py 'https://example.com'
-```
-
-Stealth-browser escalation:
-
-```bash
-cd /home/hermes/services/agent-search
-python3 scripts/web_stack.py cloak 'https://bot.sannysoft.com/' \
-  --max-chars 2000 --timeout 90
+python3 scripts/web_stack.py read 'https://example.com' --max-chars 2000
 ```
 
 ## Lifecycle
 
-Start or rebuild:
-
 ```bash
-cd /home/hermes/services/agent-search
+# Start or rebuild
+./scripts/prepare-searxng.sh
 docker compose up -d --build
-warp-cli --accept-tos mode proxy
-warp-cli --accept-tos proxy port 2080
-warp-cli --accept-tos connect
-```
 
-Stop only AgentSearch/SearXNG:
+# Logs
+docker compose logs --tail=200 api searxng
 
-```bash
-cd /home/hermes/services/agent-search
+# Restart and clear local result caches
+docker compose restart
+./scripts/clear-cache.sh
+
+# Stop this stack only
 docker compose stop
 ```
 
-Do not disconnect WARP unless no other workload uses its local proxy.
+## Optional CloakBrowser/WARP escalation
 
-Restart and verify:
+`scripts/web_stack.py cloak URL` can use CloakBrowser when installed. If a SOCKS
+listener is available at `127.0.0.1:2080`, the command routes the browser through
+it; otherwise it launches directly. Neither CloakBrowser nor Cloudflare WARP is
+installed automatically by this repository.
 
 ```bash
-cd /home/hermes/services/agent-search
-docker compose restart
-./scripts/clear-cache.sh
-hermes mcp test agent-search
+python3 scripts/web_stack.py cloak 'https://example.com' \
+  --max-chars 2000 --timeout 90 --screenshot /tmp/example.png
 ```
 
-Logs:
+This is a rendering fallback, not a promise to bypass access controls. Login,
+paywalls, CAPTCHA, robots rules, authorization, and IP reputation remain external
+controls. Do not use the software to evade legal or contractual restrictions.
+
+## Secrets
+
+Bearer authentication is optional. Store a token outside Git:
 
 ```bash
-cd /home/hermes/services/agent-search
-docker compose logs --tail=200 api searxng
-journalctl -u warp-svc --since '1 hour ago' --no-pager
+install -d -m 700 ~/.config/agent-search
+python3 - <<'PY'
+from pathlib import Path
+import secrets
+p = Path.home() / '.config/agent-search/token'
+p.write_text(secrets.token_urlsafe(48) + '\n')
+p.chmod(0o600)
+print(f'Created {p}')
+PY
 ```
 
-## Local reliability fixes
+Export that value locally as `AGENT_SEARCH_TOKEN` before starting Compose. Never
+paste credentials into prompts, issues, logs, or committed files. See
+[`docs/secrets.md`](docs/secrets.md).
 
-This checkout intentionally differs from upstream:
+## Research discipline
 
-- Obsolete Google Cache fallback is disabled. Google removed public cache, and its endpoint returned unrelated consent/search pages as false source content.
-- `scripts/clear-cache.sh` forwards its Python heredoc into Docker correctly and waits for API readiness.
-- Regression coverage lives in `tests/test_killchain_regressions.py`.
+1. Search for candidate sources.
+2. Open and read primary sources; snippets are leads, not proof.
+3. Check requested URL, final URL, title, provenance, and challenge indicators.
+4. Cross-check consequential claims across independent sources.
+5. Report access failures honestly instead of fabricating missing content.
 
-Before pulling upstream changes:
+`deep_search` generates query variants and may drift. Validate merged results
+against the original question.
+
+## Verification before updates
 
 ```bash
-cd /home/hermes/services/agent-search
-git status --short
-git log --oneline -5
+git status --short --branch
 python3 -m pytest tests -q
+python3 -m compileall app adapters mcp-server/agent_search_mcp scripts sdk -q
+docker compose config --quiet
 ```
-
-Reapply or retain those fixes if upstream still contains the obsolete fallback.
-
-## Security and limitations
-
-- URLs passed to the helper are restricted to public HTTP(S) targets; private/loopback destinations are rejected.
-- Never paste proxy credentials into chat. Install secrets directly on the server if a residential proxy is later required.
-- No browser can guarantee every page. Authentication, account authorization, hard paywalls, legal restrictions, CAPTCHAs, and IP reputation remain external controls.
-- Direct Google and WARP-routed Google were blocked from this VPS during verification. SearXNG still returned real results through working engines such as Bing. A legitimate residential proxy or paid search API would be required for dependable exact-Google access.
