@@ -1,10 +1,10 @@
-# Hermes AgentSearch — operations
+# Agent Search Stack — operations
 
 ## Architecture
 
 ```text
-Hermes
-  └─ MCP agent-search (stdio)
+Any agent or application
+  └─ HTTP, Python SDK, or MCP agent-search (stdio)
        └─ AgentSearch API 127.0.0.1:3939
             └─ SearXNG 127.0.0.1:8888 / private Docker network
 
@@ -25,20 +25,20 @@ Requirements:
 
 - Linux or macOS with Python 3.11+
 - Docker with Compose v2
-- [Hermes Agent](https://hermes-agent.nousresearch.com/docs)
+- Any MCP-compatible agent or application (optional)
 
 ```bash
-git clone https://github.com/freezetheworld/hermes-agent-search.git
-cd hermes-agent-search
+git clone https://github.com/freezetheworld/agent-search-stack.git
+cd agent-search-stack
 ./scripts/prepare-searxng.sh
 docker compose up -d --build
-./scripts/install-hermes.sh
-hermes mcp test agent-search
+./scripts/install-mcp.sh
 ```
 
 The installer creates `mcp-server/.venv`, installs the packaged MCP server, and
-registers its absolute executable path with Hermes. Use `/reload-mcp` or start a
-new Hermes session after changing MCP configuration.
+prints a client-neutral stdio configuration. Add the displayed command to your
+agent's MCP configuration. See [`docs/integrations/`](docs/integrations/) for
+client-specific examples.
 
 ## Health and functional checks
 
@@ -48,9 +48,8 @@ Run these from the repository root:
 docker compose ps
 curl -fsS http://127.0.0.1:3939/health | python3 -m json.tool
 curl -fsS 'http://127.0.0.1:8888/search?q=healthcheck&format=json' >/dev/null
-hermes mcp test agent-search
 
-python3 scripts/web_stack.py search 'Hermes Agent Nous Research GitHub' --count 3
+python3 scripts/web_stack.py search 'model context protocol web search' --count 3
 python3 scripts/web_stack.py read 'https://example.com' --max-chars 2000
 ```
 
@@ -72,11 +71,11 @@ docker compose restart
 docker compose stop
 ```
 
-## Optional CloakBrowser/WARP escalation
+## Optional browser/proxy escalation
 
 `scripts/web_stack.py cloak URL` can use CloakBrowser when installed. If a SOCKS
 listener is available at `127.0.0.1:2080`, the command routes the browser through
-it; otherwise it launches directly. Neither CloakBrowser nor Cloudflare WARP is
+it; otherwise it launches directly. Neither CloakBrowser nor a proxy service is
 installed automatically by this repository.
 
 ```bash

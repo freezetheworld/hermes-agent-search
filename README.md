@@ -1,14 +1,14 @@
-# Hermes AgentSearch
+# Agent Search Stack
 
-Self-hosted web research for Hermes and other MCP-compatible AI agents. It combines a private SearXNG instance, a 17-endpoint search/extraction API, an MCP server, layered content extraction, optional browser rendering, and an optional Tor-anonymized stack. No third-party search API keys, per-query fees, or vendor lock-in are required.
+Self-hosted web research infrastructure for any AI agent, application, or MCP client. It combines a private SearXNG instance, a 17-endpoint search/extraction API, a 16-tool MCP server, a Python SDK, layered content extraction, optional browser rendering, and an optional Tor-anonymized stack. No third-party search API keys, per-query fees, or vendor lock-in are required.
 
-This distribution adds a deterministic research CLI, Hermes-specific installation and operating guidance, safer public-URL validation, localhost-only defaults, and regression fixes on top of [AgentSearch](https://github.com/brcrusoe72/agent-search). See [UPSTREAM.md](UPSTREAM.md) for attribution and the relationship to the upstream project.
+Use it from Claude Desktop, Cursor, Windsurf, VS Code, custom agents, LangChain, Python, plain HTTP, or any client that supports stdio MCP. This distribution adds a deterministic research CLI, portable MCP packaging, safer public-URL validation, localhost-only defaults, and regression fixes on top of [AgentSearch](https://github.com/brcrusoe72/agent-search). See [UPSTREAM.md](UPSTREAM.md) for attribution.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![PyPI](https://img.shields.io/pypi/v/agentsearch-client)](https://pypi.org/project/agentsearch-client/)
 
 ```bash
-git clone https://github.com/freezetheworld/hermes-agent-search.git
-cd hermes-agent-search
+git clone https://github.com/freezetheworld/agent-search-stack.git
+cd agent-search-stack
 ./scripts/prepare-searxng.sh
 docker compose up -d
 curl "http://localhost:3939/search?q=distributed+consensus+algorithms"
@@ -24,20 +24,19 @@ curl -H "Authorization: Bearer $AGENT_SEARCH_TOKEN" \
   "http://localhost:3939/search?q=distributed+consensus+algorithms"
 ```
 
-To connect the stack to Hermes after Docker is available:
+Install the stdio MCP server after Docker is available:
 
 ```bash
-./scripts/install-hermes.sh
-hermes mcp test agent-search
+./scripts/install-mcp.sh
 ```
 
-The installer creates an isolated MCP virtual environment and registers the local stdio server with Hermes. It never stores tokens in Git. See [Hermes operations](HERMES-OPERATIONS.md).
+The installer creates an isolated virtual environment and prints the executable path and client configuration. Add that command to any MCP-compatible agent. Client-specific examples are available under [`docs/integrations/`](docs/integrations/). See [Operations](OPERATIONS.md).
 
 Prefer not to use Docker for the API server?
 
 ```bash
-git clone https://github.com/freezetheworld/hermes-agent-search.git
-cd hermes-agent-search
+git clone https://github.com/freezetheworld/agent-search-stack.git
+cd agent-search-stack
 ./scripts/install-native.sh
 ./scripts/run-native.sh
 ```
@@ -52,7 +51,8 @@ Run the self-contained test suite:
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt pytest requests
-pip install -e sdk -e mcp-server
+pip install -e sdk
+./scripts/install-mcp.sh
 ./scripts/prepare-searxng.sh
 pytest tests -q
 python -m compileall app adapters mcp-server/agent_search_mcp scripts sdk -q

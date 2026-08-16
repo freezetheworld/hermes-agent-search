@@ -1,13 +1,11 @@
 ---
 name: web-research-stack
-description: Use when researching current web information with the self-hosted Hermes AgentSearch MCP server. Provides an evidence-first search, extraction, and browser-escalation workflow.
+description: Use when researching current web information with the self-hosted AgentSearch MCP server. Provides an evidence-first search, extraction, and browser-escalation workflow for any compatible agent.
 version: 1.0.0
-author: Hermes AgentSearch Contributors
+author: Agent Search Stack Contributors
 license: MIT
 metadata:
-  hermes:
-    tags: [web-search, research, mcp, searxng, source-verification]
-    related_skills: []
+  tags: [web-search, research, mcp, searxng, source-verification]
 ---
 
 # Web Research Stack
